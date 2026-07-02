@@ -1,0 +1,493 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Pod Health Dashboard</title>
+  <style>
+    :root {
+      --bg:      #0f1117;
+      --surface: #1a1d27;
+      --surf2:   #22263a;
+      --border:  #2e3250;
+      --text:    #e2e8f0;
+      --muted:   #8892b0;
+      --accent:  #6366f1;
+      --green:   #22c55e;
+      --yellow:  #eab308;
+      --red:     #ef4444;
+      --orange:  #f97316;
+      --blue:    #3b82f6;
+      --cyan:    #06b6d4;
+      --purple:  #a855f7;
+      --r:       10px;
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+
+    /* ── HEADER ────────────────────────────────────────────────── */
+    header {
+      background: var(--surface); border-bottom: 1px solid var(--border);
+      padding: 14px 24px; display: flex; align-items: center; gap: 14px; flex-wrap: wrap;
+    }
+    header h1 { font-size: 1.15rem; font-weight: 700; display: flex; align-items: center; gap: 8px; }
+    .hdr-right { margin-left: auto; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+    select, button {
+      background: var(--surf2); color: var(--text); border: 1px solid var(--border);
+      border-radius: 6px; padding: 7px 12px; font-size: 0.84rem; cursor: pointer;
+    }
+    select:hover, button:hover { border-color: var(--accent); outline: none; }
+    button.primary { background: var(--accent); border-color: var(--accent); color: #fff; font-weight: 600; }
+    #lastRefresh { font-size: 0.76rem; color: var(--muted); }
+    .ar-wrap { display: flex; align-items: center; gap: 5px; font-size: 0.8rem; color: var(--muted); }
+    .ar-wrap input { accent-color: var(--accent); cursor: pointer; }
+
+    /* ── MAIN ──────────────────────────────────────────────────── */
+    main { padding: 20px 24px; max-width: 1600px; margin: 0 auto; }
+
+    /* ── SERVICE HEALTH OVERVIEW ───────────────────────────────── */
+    .svc-overview {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 14px; margin-bottom: 28px;
+    }
+    .svc-card {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--r); padding: 16px 18px;
+      display: flex; align-items: center; gap: 14px;
+      position: relative; overflow: hidden;
+      transition: border-color .2s;
+    }
+    .svc-card:hover { border-color: var(--accent); }
+    .svc-card .icon { font-size: 2rem; flex-shrink: 0; }
+    .svc-card .info h3 { font-size: 0.88rem; font-weight: 700; margin-bottom: 3px; }
+    .svc-card .info .counts { font-size: 0.78rem; color: var(--muted); }
+    .svc-card .status-dot {
+      position: absolute; top: 12px; right: 14px;
+      width: 9px; height: 9px; border-radius: 50%;
+    }
+    .dot-green  { background: var(--green);  box-shadow: 0 0 6px var(--green); }
+    .dot-yellow { background: var(--yellow); box-shadow: 0 0 6px var(--yellow); }
+    .dot-red    { background: var(--red);    box-shadow: 0 0 6px var(--red); }
+    .dot-grey   { background: var(--muted); }
+    .svc-card .health-label {
+      font-size: 0.72rem; font-weight: 700; margin-top: 4px;
+      text-transform: uppercase; letter-spacing: .05em;
+    }
+    .hl-green  { color: var(--green); }
+    .hl-yellow { color: var(--yellow); }
+    .hl-red    { color: var(--red); }
+    .hl-grey   { color: var(--muted); }
+    .svc-card.border-green  { border-left: 3px solid var(--green); }
+    .svc-card.border-yellow { border-left: 3px solid var(--yellow); }
+    .svc-card.border-red    { border-left: 3px solid var(--red); }
+    .svc-card.border-grey   { border-left: 3px solid var(--muted); }
+
+    /* ── SECTIONS ──────────────────────────────────────────────── */
+    .section { margin-bottom: 28px; }
+    .sec-hdr {
+      display: flex; align-items: center; gap: 10px;
+      margin-bottom: 14px; padding-bottom: 10px;
+      border-bottom: 1px solid var(--border);
+    }
+    .sec-hdr .sec-icon { font-size: 1.2rem; }
+    .sec-hdr h2 { font-size: 0.95rem; font-weight: 700; }
+    .sec-hdr .sec-badge {
+      margin-left: auto; background: var(--surf2); border: 1px solid var(--border);
+      padding: 2px 10px; border-radius: 20px; font-size: 0.72rem; color: var(--muted);
+    }
+
+    /* ── POD GRID ──────────────────────────────────────────────── */
+    .pod-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 14px; }
+
+    .pod-card {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--r); padding: 14px 16px;
+      border-left: 3px solid transparent;
+      transition: transform .15s, border-color .2s;
+    }
+    .pod-card:hover { transform: translateY(-2px); border-color: var(--accent); }
+    .pod-card.st-Running   { border-left-color: var(--green); }
+    .pod-card.st-Degraded  { border-left-color: var(--yellow); }
+    .pod-card.st-Pending   { border-left-color: var(--orange); }
+    .pod-card.st-Succeeded { border-left-color: var(--blue); }
+    .pod-card.st-Failed, .pod-card.st-Error,
+    .pod-card.st-CrashLoopBackOff { border-left-color: var(--red); }
+
+    .pod-top { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px; }
+    .pod-name { font-size: 0.82rem; font-weight: 600; word-break: break-all; padding-right: 6px; line-height: 1.35; }
+    .sbadge {
+      font-size: 0.67rem; font-weight: 700; padding: 2px 8px; border-radius: 20px;
+      white-space: nowrap; flex-shrink: 0;
+    }
+    .sb-Running   { background: rgba(34,197,94,.15);   color: var(--green); }
+    .sb-Degraded  { background: rgba(234,179,8,.15);   color: var(--yellow); }
+    .sb-Pending   { background: rgba(249,115,22,.15);  color: var(--orange); }
+    .sb-Succeeded { background: rgba(59,130,246,.15);  color: var(--blue); }
+    .sb-Failed, .sb-Error, .sb-CrashLoopBackOff { background: rgba(239,68,68,.15); color: var(--red); }
+
+    .pod-meta { font-size: 0.71rem; color: var(--muted); margin-bottom: 10px; display: flex; flex-wrap: wrap; gap: 6px; }
+
+    /* metric bars */
+    .metrics { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px; }
+    .m-lbl { font-size: 0.67rem; color: var(--muted); display: flex; justify-content: space-between; margin-bottom: 3px; }
+    .m-val { font-size: 0.8rem; font-weight: 600; }
+    .bar-track { background: var(--surf2); border-radius: 4px; height: 5px; }
+    .bar-fill  { height: 100%; border-radius: 4px; transition: width .5s ease; }
+    .bg-green  { background: var(--green); }
+    .bg-yellow { background: var(--yellow); }
+    .bg-red    { background: var(--red); }
+    .bg-blue   { background: var(--blue); }
+    .bg-muted  { background: var(--muted); }
+
+    .pod-foot {
+      display: flex; flex-wrap: wrap; gap: 10px; font-size: 0.7rem; color: var(--muted);
+      border-top: 1px solid var(--border); padding-top: 8px;
+    }
+    .pill { display: inline-flex; align-items: center; gap: 3px; padding: 1px 6px; border-radius: 4px; font-size: 0.67rem; }
+    .pill-ok   { background: rgba(34,197,94,.1);  color: var(--green); }
+    .pill-warn { background: rgba(239,68,68,.1);  color: var(--red); }
+    .pill-blue { background: rgba(59,130,246,.1); color: var(--blue); }
+
+    /* ── ELASTIC HEALTH WIDGET ─────────────────────────────────── */
+    .elastic-widget {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--r); padding: 18px; margin-bottom: 14px;
+      display: flex; flex-wrap: wrap; gap: 18px; align-items: center;
+    }
+    .es-circle {
+      width: 54px; height: 54px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center; font-size: 1.5rem;
+    }
+    .es-green  { background: rgba(34,197,94,.12);  border: 2px solid var(--green); }
+    .es-yellow { background: rgba(234,179,8,.12);  border: 2px solid var(--yellow); }
+    .es-red    { background: rgba(239,68,68,.12);  border: 2px solid var(--red); }
+    .es-grey   { background: rgba(136,146,176,.1); border: 2px solid var(--muted); }
+    .es-info h3 { font-size: 0.9rem; font-weight: 700; }
+    .es-info p  { font-size: 0.75rem; color: var(--muted); margin-top: 2px; }
+    .es-stats { display: flex; gap: 22px; flex-wrap: wrap; margin-left: auto; }
+    .es-stat .val { font-size: 1.4rem; font-weight: 800; color: var(--cyan); text-align: center; }
+    .es-stat .lbl { font-size: 0.67rem; color: var(--muted); text-align: center; }
+
+    /* ── LOADING / EMPTY ───────────────────────────────────────── */
+    .loading-cover {
+      position: fixed; inset: 0; background: rgba(15,17,23,.82);
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      gap: 14px; z-index: 100; font-size: 0.88rem; color: var(--muted);
+    }
+    .spinner { width: 28px; height: 28px; border: 3px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin .7s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .empty { text-align: center; padding: 36px; color: var(--muted); font-size: 0.84rem; }
+
+    #toast {
+      position: fixed; bottom: 22px; right: 22px; background: var(--surf2);
+      border: 1px solid var(--border); border-radius: 8px; padding: 10px 16px;
+      font-size: 0.82rem; opacity: 0; transition: opacity .3s; pointer-events: none; z-index: 200;
+    }
+    #toast.show { opacity: 1; }
+
+    @media (max-width: 600px) { main { padding: 12px; } header { padding: 12px; } }
+  </style>
+</head>
+<body>
+
+<div class="loading-cover" id="cover">
+  <div class="spinner"></div>
+  <span id="coverMsg">Loading…</span>
+</div>
+
+<header>
+  <h1>☸ Pod Health Dashboard</h1>
+  <div class="hdr-right">
+    <select id="envSel"><option value="">— Select Environment —</option></select>
+    <button class="primary" onclick="loadData()">↻ Refresh</button>
+    <div class="ar-wrap">
+      <input type="checkbox" id="arChk" />
+      <label for="arChk">Auto 30s</label>
+    </div>
+    <span id="lastRefresh"></span>
+  </div>
+</header>
+
+<main>
+  <!-- Service Health overview row -->
+  <div class="svc-overview" id="svcOverview" style="display:none;">
+    <div class="svc-card border-grey" id="svc-db">
+      <div class="icon">🗄️</div>
+      <div class="info">
+        <h3>Database</h3>
+        <div class="counts" id="svc-db-counts">—</div>
+        <div class="health-label hl-grey" id="svc-db-lbl">NO DATA</div>
+      </div>
+      <div class="status-dot dot-grey" id="svc-db-dot"></div>
+    </div>
+    <div class="svc-card border-grey" id="svc-pub">
+      <div class="icon">⚙️</div>
+      <div class="info">
+        <h3>Publish Utility</h3>
+        <div class="counts" id="svc-pub-counts">—</div>
+        <div class="health-label hl-grey" id="svc-pub-lbl">NO DATA</div>
+      </div>
+      <div class="status-dot dot-grey" id="svc-pub-dot"></div>
+    </div>
+    <div class="svc-card border-grey" id="svc-es">
+      <div class="icon">🔍</div>
+      <div class="info">
+        <h3>Elasticsearch</h3>
+        <div class="counts" id="svc-es-counts">—</div>
+        <div class="health-label hl-grey" id="svc-es-lbl">NO DATA</div>
+      </div>
+      <div class="status-dot dot-grey" id="svc-es-dot"></div>
+    </div>
+    <div class="svc-card border-grey" id="svc-cluster">
+      <div class="icon">☸</div>
+      <div class="info">
+        <h3>Cluster</h3>
+        <div class="counts" id="svc-cluster-counts">—</div>
+        <div class="health-label hl-grey" id="svc-cluster-lbl">NO DATA</div>
+      </div>
+      <div class="status-dot dot-grey" id="svc-cluster-dot"></div>
+    </div>
+  </div>
+
+  <!-- Content sections -->
+  <div id="content"><div class="empty">Select an environment to load health data.</div></div>
+</main>
+
+<div id="toast"></div>
+
+<script>
+  const API = '/api/health';
+  let arTimer = null;
+
+  /* ── Init ──────────────────────────────────────────────────── */
+  async function init() {
+    showCover('Loading environments…');
+    try {
+      const envs = await fetch(`${API}/environments`).then(r => r.json());
+      const sel = document.getElementById('envSel');
+      envs.forEach(e => {
+        const o = document.createElement('option');
+        o.value = e.name; o.textContent = e.displayName || e.name;
+        sel.appendChild(o);
+      });
+      if (envs.length === 1) { sel.value = envs[0].name; await loadData(); return; }
+    } catch(e) { toast('Could not load environments: ' + e.message); }
+    hideCover();
+  }
+
+  document.getElementById('envSel').addEventListener('change', () => loadData());
+  document.getElementById('arChk').addEventListener('change', e => {
+    clearInterval(arTimer);
+    if (e.target.checked) arTimer = setInterval(loadData, 30000);
+  });
+
+  /* ── Load ──────────────────────────────────────────────────── */
+  async function loadData() {
+    const env = document.getElementById('envSel').value;
+    if (!env) { toast('Please select an environment.'); return; }
+    showCover(`Fetching pods for ${env}…`);
+    try {
+      const [pods, elastic] = await Promise.all([
+        fetch(`${API}/pods/${enc(env)}`).then(r => r.json()),
+        fetch(`${API}/elastic/${enc(env)}`).then(r => r.json()).catch(() => null)
+      ]);
+      render(pods, elastic);
+      document.getElementById('lastRefresh').textContent =
+        'Refreshed: ' + new Date().toLocaleTimeString();
+    } catch(e) { toast('Load error: ' + e.message); }
+    hideCover();
+  }
+
+  /* ── Render ────────────────────────────────────────────────── */
+  function render(data, elastic) {
+    const all   = data.pods || [];
+    const db    = all.filter(p => p.category === 'database');
+    const pub   = all.filter(p => p.category === 'publish');
+    const es    = all.filter(p => p.category === 'elastic');
+    const total = all.length;
+
+    // Service Health overview cards
+    updateServiceCard('db',      db,     null);
+    updateServiceCard('pub',     pub,    null);
+    updateServiceCard('es',      es,     elastic);
+    updateClusterCard(total, all.filter(p => p.status === 'Running').length,
+                             all.filter(p => p.status === 'Failed' || p.status === 'CrashLoopBackOff').length);
+
+    document.getElementById('svcOverview').style.display = '';
+
+    let html = '';
+
+    // Elastic cluster health widget
+    if (elastic) html += elasticWidget(elastic);
+
+    // Database section
+    html += section('🗄️', 'Database', db, 'border-l-blue');
+
+    // Publish Utility section
+    html += section('⚙️', 'Publish Utility', pub, 'border-l-purple');
+
+    // Elasticsearch pods section
+    html += section('🔍', 'Elasticsearch', es, 'border-l-cyan');
+
+    document.getElementById('content').innerHTML = html || '<div class="empty">No matching pods found.</div>';
+  }
+
+  /* ── Service overview card ─────────────────────────────────── */
+  function updateServiceCard(key, pods, elastic) {
+    const running = pods.filter(p => p.status === 'Running').length;
+    const failed  = pods.filter(p => p.status === 'Failed' || p.status === 'CrashLoopBackOff').length;
+    const total   = pods.length;
+
+    let health, dotClass, lblClass, borderClass;
+    if (total === 0 && key === 'es' && elastic) {
+      // use elastic cluster status
+      const s = (elastic.status||'').toLowerCase();
+      health = s.toUpperCase();
+      dotClass   = s === 'green' ? 'dot-green' : s === 'yellow' ? 'dot-yellow' : 'dot-red';
+      lblClass   = s === 'green' ? 'hl-green'  : s === 'yellow' ? 'hl-yellow'  : 'hl-red';
+      borderClass = s === 'green' ? 'border-green' : s === 'yellow' ? 'border-yellow' : 'border-red';
+    } else if (total === 0) {
+      health = 'NO PODS'; dotClass = 'dot-grey'; lblClass = 'hl-grey'; borderClass = 'border-grey';
+    } else if (failed > 0) {
+      health = 'UNHEALTHY'; dotClass = 'dot-red'; lblClass = 'hl-red'; borderClass = 'border-red';
+    } else if (running < total) {
+      health = 'DEGRADED'; dotClass = 'dot-yellow'; lblClass = 'hl-yellow'; borderClass = 'border-yellow';
+    } else {
+      health = 'HEALTHY'; dotClass = 'dot-green'; lblClass = 'hl-green'; borderClass = 'border-green';
+    }
+
+    const card = document.getElementById('svc-' + key);
+    card.className = `svc-card ${borderClass}`;
+    document.getElementById('svc-' + key + '-counts').textContent = total ? `${running}/${total} running` : '—';
+    document.getElementById('svc-' + key + '-lbl').textContent = health;
+    document.getElementById('svc-' + key + '-lbl').className = `health-label ${lblClass}`;
+    document.getElementById('svc-' + key + '-dot').className = `status-dot ${dotClass}`;
+  }
+
+  function updateClusterCard(total, running, failed) {
+    let health, dotClass, lblClass, borderClass;
+    if (total === 0) {
+      health = 'NO DATA'; dotClass = 'dot-grey'; lblClass = 'hl-grey'; borderClass = 'border-grey';
+    } else if (failed > 0) {
+      health = 'ISSUES'; dotClass = 'dot-yellow'; lblClass = 'hl-yellow'; borderClass = 'border-yellow';
+    } else if (running === total) {
+      health = 'ALL RUNNING'; dotClass = 'dot-green'; lblClass = 'hl-green'; borderClass = 'border-green';
+    } else {
+      health = 'PARTIAL'; dotClass = 'dot-yellow'; lblClass = 'hl-yellow'; borderClass = 'border-yellow';
+    }
+    const card = document.getElementById('svc-cluster');
+    card.className = `svc-card ${borderClass}`;
+    document.getElementById('svc-cluster-counts').textContent = total ? `${running}/${total} running` : '—';
+    document.getElementById('svc-cluster-lbl').textContent = health;
+    document.getElementById('svc-cluster-lbl').className = `health-label ${lblClass}`;
+    document.getElementById('svc-cluster-dot').className = `status-dot ${dotClass}`;
+  }
+
+  /* ── Section builder ───────────────────────────────────────── */
+  function section(icon, title, pods, _cls) {
+    const running = pods.filter(p => p.status === 'Running').length;
+    const badge   = pods.length ? `${running}/${pods.length} running` : 'No pods';
+    return `
+    <div class="section">
+      <div class="sec-hdr">
+        <span class="sec-icon">${icon}</span>
+        <h2>${title}</h2>
+        <span class="sec-badge">${badge}</span>
+      </div>
+      <div class="pod-grid">
+        ${pods.length ? pods.map(podCard).join('') : '<div class="empty">No pods in this category.</div>'}
+      </div>
+    </div>`;
+  }
+
+  /* ── Pod card ──────────────────────────────────────────────── */
+  function podCard(p) {
+    const st   = (p.status || 'Unknown').replace(/[^a-zA-Z]/g, '');
+    const name = p.name.length > 40 ? p.name.slice(0, 37) + '…' : p.name;
+
+    // CPU bar — cpuCores is fraction of a core, show as % of 1 core (capped at 100%)
+    const cpuPct = p.cpuCores > 0 ? Math.min(100, Math.round(p.cpuCores * 100)) : null;
+    const cpuBar = cpuPct === null ? 'bg-muted' : cpuPct > 80 ? 'bg-red' : cpuPct > 50 ? 'bg-yellow' : 'bg-green';
+
+    // Memory bar — scale to 2 GiB for visual
+    const memPct = p.memoryMi > 0 ? Math.min(100, Math.round(p.memoryMi / 2048 * 100)) : null;
+    const memBar = memPct === null ? 'bg-muted' : memPct > 80 ? 'bg-red' : memPct > 50 ? 'bg-yellow' : 'bg-blue';
+
+    const restartPill = p.restartCount > 0
+      ? `<span class="pill pill-warn">↺ ${p.restartCount} restart${p.restartCount > 1 ? 's' : ''}</span>`
+      : `<span class="pill pill-ok">↺ 0 restarts</span>`;
+
+    const reasonTag = p.containerReason
+      ? `<span style="font-size:.67rem;color:var(--orange);margin-left:4px;">(${p.containerReason})</span>` : '';
+
+    return `
+    <div class="pod-card st-${st}">
+      <div class="pod-top">
+        <div class="pod-name" title="${p.name}">${name}${reasonTag}</div>
+        <span class="sbadge sb-${st}">${p.status || 'Unknown'}</span>
+      </div>
+      <div class="pod-meta">
+        <span title="Ready containers">📦 ${p.readyContainers}/${p.totalContainers}</span>
+        <span title="Node">🖥 ${p.nodeName || '—'}</span>
+        <span title="IP">🌐 ${p.ipAddress || '—'}</span>
+      </div>
+      <div class="metrics">
+        <div>
+          <div class="m-lbl"><span>CPU</span><span class="m-val">${p.cpu || '—'}</span></div>
+          <div class="bar-track"><div class="bar-fill ${cpuBar}" style="width:${cpuPct ?? 2}%"></div></div>
+        </div>
+        <div>
+          <div class="m-lbl"><span>Memory</span><span class="m-val">${p.memory || '—'}</span></div>
+          <div class="bar-track"><div class="bar-fill ${memBar}" style="width:${memPct ?? 2}%"></div></div>
+        </div>
+      </div>
+      <div class="pod-foot">
+        ${restartPill}
+        <span class="pill pill-blue">📅 ${p.ageDays}d old</span>
+        <span title="IP" style="margin-left:auto;">${p.ipAddress || ''}</span>
+      </div>
+    </div>`;
+  }
+
+  /* ── Elastic widget ────────────────────────────────────────── */
+  function elasticWidget(h) {
+    if (!h || !h.status) return '';
+    const s  = h.status.toLowerCase();
+    const icon = s === 'green' ? '✅' : s === 'yellow' ? '⚠️' : '🔴';
+    const cls  = s === 'green' ? 'es-green' : s === 'yellow' ? 'es-yellow' : s === 'red' ? 'es-red' : 'es-grey';
+    const clr  = s === 'green' ? 'var(--green)' : s === 'yellow' ? 'var(--yellow)' : 'var(--red)';
+    const unassCol = (h.unassignedShards || 0) > 0 ? 'var(--red)' : 'var(--cyan)';
+    return `
+    <div class="elastic-widget">
+      <div class="es-circle ${cls}">${icon}</div>
+      <div class="es-info">
+        <h3>${h.clusterName || 'elasticsearch'}</h3>
+        <p>Cluster status: <strong style="color:${clr}">${h.status.toUpperCase()}</strong></p>
+      </div>
+      <div class="es-stats">
+        <div class="es-stat"><div class="val">${h.activeNodes ?? '—'}</div><div class="lbl">Active Nodes</div></div>
+        <div class="es-stat"><div class="val">${h.totalNodes ?? '—'}</div><div class="lbl">Data Nodes</div></div>
+        <div class="es-stat"><div class="val">${h.activeShards ?? '—'}</div><div class="lbl">Active Shards</div></div>
+        <div class="es-stat"><div class="val" style="color:${unassCol}">${h.unassignedShards ?? 0}</div><div class="lbl">Unassigned</div></div>
+      </div>
+    </div>`;
+  }
+
+  /* ── Helpers ───────────────────────────────────────────────── */
+  function showCover(msg) {
+    document.getElementById('coverMsg').textContent = msg;
+    document.getElementById('cover').style.display = 'flex';
+  }
+  function hideCover() { document.getElementById('cover').style.display = 'none'; }
+  function enc(s) { return encodeURIComponent(s); }
+  function toast(msg, ms = 3500) {
+    const el = document.getElementById('toast');
+    el.textContent = msg; el.classList.add('show');
+    setTimeout(() => el.classList.remove('show'), ms);
+  }
+
+  init();
+</script>
+</body>
+</html>

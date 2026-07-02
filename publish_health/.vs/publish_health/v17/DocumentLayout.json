@@ -1,0 +1,122 @@
+{
+  "Version": 1,
+  "WorkspaceRootPath": "D:\\systemhealth\\publish_health\\",
+  "Documents": [
+    {
+      "AbsoluteMoniker": "D:0:0:{E1470316-D1E5-4B7E-9749-4D1CF2B0BC61}|publish_health\\publish_health.csproj|d:\\systemhealth\\publish_health\\publish_health\\kubeservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{E1470316-D1E5-4B7E-9749-4D1CF2B0BC61}|publish_health\\publish_health.csproj|solutionrelative:publish_health\\kubeservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{E1470316-D1E5-4B7E-9749-4D1CF2B0BC61}|publish_health\\publish_health.csproj|d:\\systemhealth\\publish_health\\publish_health\\kubenodemodel.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{E1470316-D1E5-4B7E-9749-4D1CF2B0BC61}|publish_health\\publish_health.csproj|solutionrelative:publish_health\\kubenodemodel.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{E1470316-D1E5-4B7E-9749-4D1CF2B0BC61}|publish_health\\publish_health.csproj|d:\\systemhealth\\publish_health\\publish_health\\kubepodmodel.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{E1470316-D1E5-4B7E-9749-4D1CF2B0BC61}|publish_health\\publish_health.csproj|solutionrelative:publish_health\\kubepodmodel.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{E1470316-D1E5-4B7E-9749-4D1CF2B0BC61}|publish_health\\publish_health.csproj|d:\\systemhealth\\publish_health\\publish_health\\kubepodmetricsmodel.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{E1470316-D1E5-4B7E-9749-4D1CF2B0BC61}|publish_health\\publish_health.csproj|solutionrelative:publish_health\\kubepodmetricsmodel.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{E1470316-D1E5-4B7E-9749-4D1CF2B0BC61}|publish_health\\publish_health.csproj|d:\\systemhealth\\publish_health\\publish_health\\databaseconnectionresponse.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{E1470316-D1E5-4B7E-9749-4D1CF2B0BC61}|publish_health\\publish_health.csproj|solutionrelative:publish_health\\databaseconnectionresponse.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{E1470316-D1E5-4B7E-9749-4D1CF2B0BC61}|publish_health\\publish_health.csproj|d:\\systemhealth\\publish_health\\publish_health\\hostedenvironmentconfigresponse.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{E1470316-D1E5-4B7E-9749-4D1CF2B0BC61}|publish_health\\publish_health.csproj|solutionrelative:publish_health\\hostedenvironmentconfigresponse.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    }
+  ],
+  "DocumentGroupContainers": [
+    {
+      "Orientation": 0,
+      "VerticalTabListWidth": 256,
+      "DocumentGroups": [
+        {
+          "DockedWidth": 200,
+          "SelectedChildIndex": 5,
+          "Children": [
+            {
+              "$type": "Document",
+              "DocumentIndex": 1,
+              "Title": "KubeNodeModel.cs",
+              "DocumentMoniker": "D:\\systemhealth\\publish_health\\publish_health\\KubeNodeModel.cs",
+              "RelativeDocumentMoniker": "publish_health\\KubeNodeModel.cs",
+              "ToolTip": "D:\\systemhealth\\publish_health\\publish_health\\KubeNodeModel.cs",
+              "RelativeToolTip": "publish_health\\KubeNodeModel.cs",
+              "ViewState": "AgIAAA4AAAAAAAAAAAAiwBYAAAAWAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-06-10T12:33:02.409Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 3,
+              "Title": "KubePodMetricsModel.cs",
+              "DocumentMoniker": "D:\\systemhealth\\publish_health\\publish_health\\KubePodMetricsModel.cs",
+              "RelativeDocumentMoniker": "publish_health\\KubePodMetricsModel.cs",
+              "ToolTip": "D:\\systemhealth\\publish_health\\publish_health\\KubePodMetricsModel.cs",
+              "RelativeToolTip": "publish_health\\KubePodMetricsModel.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAoAAAATAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-06-10T10:14:14.399Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 5,
+              "Title": "HostedEnvironmentConfigResponse.cs",
+              "DocumentMoniker": "D:\\systemhealth\\publish_health\\publish_health\\HostedEnvironmentConfigResponse.cs",
+              "RelativeDocumentMoniker": "publish_health\\HostedEnvironmentConfigResponse.cs",
+              "ToolTip": "D:\\systemhealth\\publish_health\\publish_health\\HostedEnvironmentConfigResponse.cs",
+              "RelativeToolTip": "publish_health\\HostedEnvironmentConfigResponse.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAwAAAAFAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-06-10T09:56:23.078Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 4,
+              "Title": "DatabaseConnectionResponse.cs",
+              "DocumentMoniker": "D:\\systemhealth\\publish_health\\publish_health\\DatabaseConnectionResponse.cs",
+              "RelativeDocumentMoniker": "publish_health\\DatabaseConnectionResponse.cs",
+              "ToolTip": "D:\\systemhealth\\publish_health\\publish_health\\DatabaseConnectionResponse.cs",
+              "RelativeToolTip": "publish_health\\DatabaseConnectionResponse.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAqwAUAAAAWAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-06-10T09:53:16.255Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 2,
+              "Title": "KubePodModel.cs",
+              "DocumentMoniker": "D:\\systemhealth\\publish_health\\publish_health\\KubePodModel.cs",
+              "RelativeDocumentMoniker": "publish_health\\KubePodModel.cs",
+              "ToolTip": "D:\\systemhealth\\publish_health\\publish_health\\KubePodModel.cs",
+              "RelativeToolTip": "publish_health\\KubePodModel.cs",
+              "ViewState": "AgIAAAgAAAAAAAAAAAAIwBEAAAAwAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-06-09T11:05:23.635Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 0,
+              "Title": "KubeService.cs",
+              "DocumentMoniker": "D:\\systemhealth\\publish_health\\publish_health\\KubeService.cs",
+              "RelativeDocumentMoniker": "publish_health\\KubeService.cs",
+              "ToolTip": "D:\\systemhealth\\publish_health\\publish_health\\KubeService.cs",
+              "RelativeToolTip": "publish_health\\KubeService.cs",
+              "ViewState": "AgIAALEGAAAAAAAAAAAIwLsGAAAZAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-06-09T10:24:39.226Z",
+              "EditorCaption": ""
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
