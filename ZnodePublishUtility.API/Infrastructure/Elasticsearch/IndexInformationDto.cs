@@ -14,5 +14,12 @@ public class IndexInformationDto
     public long DocumentCount { get; set; }
     public long IndexSizeBytes { get; set; }
     public string IndexSize { get; set; } = "";
+
+    /// <summary>
+    /// Average <c>_source</c> size (bytes) across a sample of documents from the index — used by
+    /// the client to estimate growth from indexing draft products.
+    /// </summary>
+    public double AverageDocumentSizeBytes { get; set; }
+
     public JsonElement Mapping { get; set; }
 }

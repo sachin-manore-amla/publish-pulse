@@ -161,9 +161,10 @@ public class ElasticsearchController : ControllerBase
     }
 
     /// <summary>
-    /// Document count, store size and mapping for a single index — fetched directly from
-    /// Elasticsearch (<c>_cat/indices/{index}</c> + <c>{index}/_mapping</c>), not via the
-    /// Kubernetes-exec HealthService proxy used by <see cref="GetPublishSummary"/>.
+    /// Document count, store size, mapping and average sampled document size for a single
+    /// index — fetched directly from Elasticsearch (<c>_cat/indices/{index}</c> +
+    /// <c>{index}/_mapping</c> + <c>{index}/_search</c>), not via the Kubernetes-exec
+    /// HealthService proxy used by <see cref="GetPublishSummary"/>.
     /// </summary>
     [HttpGet("index-mapping/{indexName}")]
     [ProducesResponseType(typeof(IndexInformationDto), StatusCodes.Status200OK)]
@@ -178,12 +179,14 @@ public class ElasticsearchController : ControllerBase
 
             var statsTask = _elasticsearchClient.GetIndexStatsAsync(indexName, cancellationToken);
             var mappingTask = _elasticsearchClient.GetIndexMappingAsync(indexName, cancellationToken);
-            await Task.WhenAll(statsTask, mappingTask);
+            var sampleTask = _elasticsearchClient.SearchSampleDocumentsAsync(indexName, 10, cancellationToken);
+            await Task.WhenAll(statsTask, mappingTask, sampleTask);
 
             using var stats = statsTask.Result;
             using var mapping = mappingTask.Result;
+            using var sample = sampleTask.Result;
 
-            var info = ElasticsearchIndexAggregator.Aggregate(indexName, stats, mapping);
+            var info = ElasticsearchIndexAggregator.Aggregate(indexName, stats, mapping, sample);
             return Ok(info);
         }
         catch (ElasticsearchUnavailableException ex)

@@ -37,4 +37,10 @@ public interface IElasticsearchClient
     /// (GET /_cat/indices/{indexName}?format=json&amp;bytes=b).
     /// </summary>
     Task<JsonDocument> GetIndexStatsAsync(string indexName, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Retrieve a sample of documents from an index, used to estimate average document size
+    /// (GET /{indexName}/_search?size={size}).
+    /// </summary>
+    Task<JsonDocument> SearchSampleDocumentsAsync(string indexName, int size = 10, CancellationToken cancellationToken = default);
 }

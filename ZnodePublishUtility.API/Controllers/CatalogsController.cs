@@ -10,13 +10,40 @@ namespace ZnodePublishUtility.API.Controllers;
 public class CatalogsController : ControllerBase
 {
     private readonly ICatalogService _catalogService;
+    private readonly ICatalogProductCountService _catalogProductCountService;
     private readonly ILogger<CatalogsController> _logger;
     private const string UserId = "api-user"; // In real app, would get from claims
 
-    public CatalogsController(ICatalogService catalogService, ILogger<CatalogsController> logger)
+    public CatalogsController(
+        ICatalogService catalogService,
+        ICatalogProductCountService catalogProductCountService,
+        ILogger<CatalogsController> logger)
     {
         _catalogService = catalogService;
+        _catalogProductCountService = catalogProductCountService;
         _logger = logger;
+    }
+
+    /// <summary>
+    /// Draft (not-yet-published) product counts per catalog, sourced directly from SQL Server
+    /// via <c>EXEC dbo.GetCatalogProductCounts;</c> — not the published-product count on the
+    /// Catalog entity returned by <see cref="GetAll"/>.
+    /// </summary>
+    [HttpGet("product-counts")]
+    [ProducesResponseType(typeof(ApiResponse<List<CatalogProductCountDto>>), StatusCodes.Status200OK)]
+    public async Task<IActionResult> GetProductCounts()
+    {
+        try
+        {
+            _logger.LogInformation("Fetching catalog draft product counts from SQL Server");
+            var counts = await _catalogProductCountService.GetCatalogProductCountsAsync();
+            return Ok(ApiResponse<List<CatalogProductCountDto>>.SuccessResponse(counts, "Catalog product counts retrieved successfully"));
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error fetching catalog product counts");
+            return StatusCode(500, ApiResponse<List<CatalogProductCountDto>>.ErrorResponse("Internal server error"));
+        }
     }
 
     /// <summary>

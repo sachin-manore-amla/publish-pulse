@@ -2,6 +2,7 @@ using ZnodePublishUtility.API.Infrastructure.Elasticsearch;
 using ZnodePublishUtility.Data.Interfaces;
 using ZnodePublishUtility.Data.MongoDB;
 using ZnodePublishUtility.Data.Repositories;
+using ZnodePublishUtility.Data.SqlServer;
 using ZnodePublishUtility.Service.Interfaces;
 using ZnodePublishUtility.Service.Services;
 
@@ -16,9 +17,14 @@ var healthServiceBaseUrl = builder.Configuration["HealthService:BaseUrl"]
     ?? string.Empty;
 var elasticsearchBaseUrl = builder.Configuration["Elasticsearch:BaseUrl"]
     ?? string.Empty;
+var znodeEcommerceDbConnectionString = builder.Configuration.GetConnectionString("ZnodeECommerceDB")
+    ?? string.Empty;
 
 // ── MongoDB ───────────────────────────────────────────────────────────────────
 builder.Services.AddSingleton(_ => new MongoDbContext(mongoConnectionString, mongoDatabaseName));
+
+// ── SQL Server (ZnodeECommerceDB) ─────────────────────────────────────────────
+builder.Services.AddSingleton(_ => new SqlServerContext(znodeEcommerceDbConnectionString));
 
 // ── HTTP client for HealthService proxy ──────────────────────────────────────
 builder.Services.AddHttpClient("HealthService", client =>
@@ -48,6 +54,7 @@ builder.Services.AddScoped<IPortalRepository, PortalRepository>();
 builder.Services.AddScoped<IPublishJobRepository, PublishJobRepository>();
 builder.Services.AddScoped<IPublishHistoryRepository, PublishHistoryRepository>();
 builder.Services.AddScoped<IActivityLogRepository, ActivityLogRepository>();
+builder.Services.AddScoped<ICatalogProductCountRepository, CatalogProductCountRepository>();
 
 // ── Services ─────────────────────────────────────────────────────────────────
 builder.Services.AddScoped<ICatalogService, CatalogService>();
@@ -56,6 +63,7 @@ builder.Services.AddScoped<IPortalService, PortalService>();
 builder.Services.AddScoped<IPublishJobService, PublishJobService>();
 builder.Services.AddScoped<IPublishHistoryService, PublishHistoryService>();
 builder.Services.AddScoped<IActivityLogService, ActivityLogService>();
+builder.Services.AddScoped<ICatalogProductCountService, CatalogProductCountService>();
 
 // ── API + Swagger ─────────────────────────────────────────────────────────────
 builder.Services.AddControllers();

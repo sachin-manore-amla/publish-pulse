@@ -10,21 +10,24 @@ namespace ZnodePublishUtility.API.Infrastructure.Elasticsearch;
 public static class ElasticsearchIndexAggregator
 {
     /// <summary>
-    /// Aggregates index stats (health, doc count, store size) and mapping into one DTO.
+    /// Aggregates index stats (health, doc count, store size), mapping and a sample-document
+    /// average size into one DTO.
     /// </summary>
     /// <param name="indexName">Index name requested by the caller (used as a fallback label).</param>
     /// <param name="stats">Root document returned by GET /_cat/indices/{index}?format=json&amp;bytes=b.</param>
     /// <param name="mapping">Root document returned by GET /{index}/_mapping.</param>
+    /// <param name="sampleSearch">Root document returned by GET /{index}/_search?size={n}.</param>
     /// <remarks>
     /// <c>_cat</c> endpoints always return string-typed values even with <c>format=json</c>, so
     /// doc count/size are parsed defensively and default to 0 when missing or non-numeric.
     /// </remarks>
-    public static IndexInformationDto Aggregate(string indexName, JsonDocument stats, JsonDocument mapping)
+    public static IndexInformationDto Aggregate(string indexName, JsonDocument stats, JsonDocument mapping, JsonDocument sampleSearch)
     {
         var dto = new IndexInformationDto { IndexName = indexName, IndexSize = FormatBytes(0), Mapping = EmptyObject() };
 
         ApplyStats(stats.RootElement, dto);
         ApplyMapping(mapping.RootElement, dto);
+        dto.AverageDocumentSizeBytes = ComputeAverageDocumentSizeBytes(sampleSearch.RootElement);
 
         return dto;
     }
@@ -64,6 +67,35 @@ public static class ElasticsearchIndexAggregator
             }
             break;
         }
+    }
+
+    /// <summary>
+    /// Averages the UTF-8 byte length of each sampled hit's <c>_source</c> — an approximation of
+    /// per-document storage footprint (excludes indexing/metadata overhead) used to estimate
+    /// growth from indexing draft products.
+    /// </summary>
+    private static double ComputeAverageDocumentSizeBytes(JsonElement sampleSearchRoot)
+    {
+        if (!sampleSearchRoot.TryGetProperty("hits", out var hitsWrapper) ||
+            !hitsWrapper.TryGetProperty("hits", out var hits) ||
+            hits.ValueKind != JsonValueKind.Array)
+        {
+            return 0;
+        }
+
+        long totalBytes = 0;
+        int sampledCount = 0;
+
+        foreach (var hit in hits.EnumerateArray())
+        {
+            if (hit.ValueKind == JsonValueKind.Object && hit.TryGetProperty("_source", out var source))
+            {
+                totalBytes += System.Text.Encoding.UTF8.GetByteCount(source.GetRawText());
+                sampledCount++;
+            }
+        }
+
+        return sampledCount > 0 ? (double)totalBytes / sampledCount : 0;
     }
 
     private static string GetString(JsonElement element, string propertyName) =>

@@ -119,4 +119,24 @@ public class ElasticsearchClient : IElasticsearchClient
             throw new ElasticsearchUnavailableException($"Index stats API unavailable for {indexName}", ex);
         }
     }
+
+    public async Task<JsonDocument> SearchSampleDocumentsAsync(string indexName, int size = 10, CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            if (string.IsNullOrWhiteSpace(indexName))
+                throw new ArgumentException("Index name cannot be empty", nameof(indexName));
+
+            var response = await _httpClient.GetAsync(
+                $"/{Uri.EscapeDataString(indexName)}/_search?size={size}", cancellationToken);
+            response.EnsureSuccessStatusCode();
+            using var stream = await response.Content.ReadAsStreamAsync(cancellationToken);
+            return await JsonDocument.ParseAsync(stream, cancellationToken: cancellationToken);
+        }
+        catch (HttpRequestException ex)
+        {
+            _logger.LogError(ex, "Failed to retrieve sample documents for index {IndexName}", indexName);
+            throw new ElasticsearchUnavailableException($"Search API unavailable for {indexName}", ex);
+        }
+    }
 }
