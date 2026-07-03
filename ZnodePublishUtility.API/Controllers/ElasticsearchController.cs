@@ -1,5 +1,7 @@
 using System.Text.Json;
 using Microsoft.AspNetCore.Mvc;
+using ZnodePublishUtility.API.Infrastructure.Elasticsearch;
+using ZnodePublishUtility.Utilities.Exceptions;
 
 namespace ZnodePublishUtility.API.Controllers;
 
@@ -108,15 +110,54 @@ public class ElasticsearchController : ControllerBase
     private readonly IHttpClientFactory _httpClientFactory;
     private readonly IConfiguration _configuration;
     private readonly ILogger<ElasticsearchController> _logger;
+    private readonly IElasticsearchClient _elasticsearchClient;
 
     public ElasticsearchController(
         IHttpClientFactory httpClientFactory,
         IConfiguration configuration,
-        ILogger<ElasticsearchController> logger)
+        ILogger<ElasticsearchController> logger,
+        IElasticsearchClient elasticsearchClient)
     {
         _httpClientFactory = httpClientFactory;
         _configuration = configuration;
         _logger = logger;
+        _elasticsearchClient = elasticsearchClient;
+    }
+
+    /// <summary>
+    /// Current Elasticsearch cluster configuration: cluster name/version/status, node count,
+    /// active shard count and heap usage — aggregated live from the cluster.
+    /// </summary>
+    [HttpGet("configuration")]
+    [ProducesResponseType(typeof(ElasticsearchConfigurationDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status502BadGateway)]
+    public async Task<IActionResult> GetConfiguration(CancellationToken cancellationToken)
+    {
+        try
+        {
+            var healthTask = _elasticsearchClient.GetClusterHealthAsync(cancellationToken);
+            var nodesTask = _elasticsearchClient.GetNodesAsync(cancellationToken);
+            var shardsTask = _elasticsearchClient.GetShardsAsync(cancellationToken);
+            var settingsTask = _elasticsearchClient.GetClusterSettingsAsync(cancellationToken);
+
+            await Task.WhenAll(healthTask, nodesTask, shardsTask, settingsTask);
+
+            using var health = healthTask.Result;
+            using var nodes = nodesTask.Result;
+            using var shards = shardsTask.Result;
+            using var settings = settingsTask.Result;
+
+            var configuration = ElasticsearchConfigurationAggregator.Aggregate(health, nodes, shards);
+            return Ok(configuration);
+        }
+        catch (ElasticsearchUnavailableException ex)
+        {
+            _logger.LogError(ex, "Failed to retrieve Elasticsearch configuration");
+            return Problem(
+                detail: ex.Message,
+                statusCode: StatusCodes.Status502BadGateway,
+                title: "Elasticsearch configuration unavailable");
+        }
     }
 
     /// <summary>

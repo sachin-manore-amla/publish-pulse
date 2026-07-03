@@ -21,9 +21,15 @@ public class ValidationException : ZnodePublishUtilityException
 {
     public List<string> ValidationErrors { get; }
 
-    public ValidationException(string message, List<string>? validationErrors = null) 
+    public ValidationException(string message, List<string>? validationErrors = null)
         : base(message)
     {
         ValidationErrors = validationErrors ?? new List<string>();
     }
+}
+
+public class ElasticsearchUnavailableException : ZnodePublishUtilityException
+{
+    public ElasticsearchUnavailableException(string message) : base(message) { }
+    public ElasticsearchUnavailableException(string message, Exception innerException) : base(message, innerException) { }
 }

@@ -1,3 +1,4 @@
+using ZnodePublishUtility.API.Infrastructure.Elasticsearch;
 using ZnodePublishUtility.Data.Interfaces;
 using ZnodePublishUtility.Data.MongoDB;
 using ZnodePublishUtility.Data.Repositories;
@@ -13,6 +14,8 @@ var mongoDatabaseName = builder.Configuration["MongoDB:DatabaseName"]
     ?? "ZnodePublishUtility";
 var healthServiceBaseUrl = builder.Configuration["HealthService:BaseUrl"]
     ?? string.Empty;
+var elasticsearchBaseUrl = builder.Configuration["Elasticsearch:BaseUrl"]
+    ?? string.Empty;
 
 // ── MongoDB ───────────────────────────────────────────────────────────────────
 builder.Services.AddSingleton(_ => new MongoDbContext(mongoConnectionString, mongoDatabaseName));
@@ -26,6 +29,17 @@ builder.Services.AddHttpClient("HealthService", client =>
         client.Timeout = TimeSpan.FromSeconds(30);
     }
 });
+
+// ── HTTP client for direct Elasticsearch access ──────────────────────────────
+builder.Services.AddHttpClient("Elasticsearch", client =>
+{
+    if (!string.IsNullOrWhiteSpace(elasticsearchBaseUrl))
+    {
+        client.BaseAddress = new Uri(elasticsearchBaseUrl);
+        client.Timeout = TimeSpan.FromSeconds(30);
+    }
+});
+builder.Services.AddScoped<IElasticsearchClient, ElasticsearchClient>();
 
 // ── Repositories ──────────────────────────────────────────────────────────────
 builder.Services.AddScoped<ICatalogRepository, CatalogRepository>();
