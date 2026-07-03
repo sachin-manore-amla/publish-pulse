@@ -2,9 +2,10 @@
 # This .gitignore file was automatically created by Microsoft(R) Visual Studio.
 ################################################################################
 
-/ZnodePublishUtility.API
+
 /.vs/ZnodePublishUtility
 /publish_health/publish_health/obj
 /ZnodePublishUtility
 /ZnodePublishUtility.API/obj
 /ZnodePublishUtility.API.Tests
+/ZnodePublishUtility.API/bin/Debug/net8.0
