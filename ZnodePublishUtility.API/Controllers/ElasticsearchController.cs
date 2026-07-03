@@ -161,6 +161,33 @@ public class ElasticsearchController : ControllerBase
     }
 
     /// <summary>
+    /// Retrieve the mapping for a specific index.
+    /// </summary>
+    [HttpGet("index-mapping/{indexName}")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status502BadGateway)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
+    public async Task<IActionResult> GetIndexMapping(string indexName, CancellationToken cancellationToken)
+    {
+        try
+        {
+            if (string.IsNullOrWhiteSpace(indexName))
+                return BadRequest(new { error = "Index name is required" });
+
+            var mapping = await _elasticsearchClient.GetIndexMappingAsync(indexName, cancellationToken);
+            return Ok(mapping);
+        }
+        catch (ElasticsearchUnavailableException ex)
+        {
+            _logger.LogError(ex, "Failed to retrieve index mapping for {IndexName}", indexName);
+            return Problem(
+                detail: ex.Message,
+                statusCode: StatusCodes.Status502BadGateway,
+                title: "Index mapping unavailable");
+        }
+    }
+
+    /// <summary>
     /// Aggregated publish summary for a catalog: real ES index data, cluster health,
     /// node stats, K8s resources, recommended config, and estimated publish duration.
     /// </summary>
