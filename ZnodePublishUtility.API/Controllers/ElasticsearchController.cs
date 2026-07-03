@@ -161,10 +161,12 @@ public class ElasticsearchController : ControllerBase
     }
 
     /// <summary>
-    /// Retrieve the mapping for a specific index.
+    /// Document count, store size and mapping for a single index — fetched directly from
+    /// Elasticsearch (<c>_cat/indices/{index}</c> + <c>{index}/_mapping</c>), not via the
+    /// Kubernetes-exec HealthService proxy used by <see cref="GetPublishSummary"/>.
     /// </summary>
     [HttpGet("index-mapping/{indexName}")]
-    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(IndexInformationDto), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status502BadGateway)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> GetIndexMapping(string indexName, CancellationToken cancellationToken)
@@ -174,16 +176,23 @@ public class ElasticsearchController : ControllerBase
             if (string.IsNullOrWhiteSpace(indexName))
                 return BadRequest(new { error = "Index name is required" });
 
-            var mapping = await _elasticsearchClient.GetIndexMappingAsync(indexName, cancellationToken);
-            return Ok(mapping);
+            var statsTask = _elasticsearchClient.GetIndexStatsAsync(indexName, cancellationToken);
+            var mappingTask = _elasticsearchClient.GetIndexMappingAsync(indexName, cancellationToken);
+            await Task.WhenAll(statsTask, mappingTask);
+
+            using var stats = statsTask.Result;
+            using var mapping = mappingTask.Result;
+
+            var info = ElasticsearchIndexAggregator.Aggregate(indexName, stats, mapping);
+            return Ok(info);
         }
         catch (ElasticsearchUnavailableException ex)
         {
-            _logger.LogError(ex, "Failed to retrieve index mapping for {IndexName}", indexName);
+            _logger.LogError(ex, "Failed to retrieve index information for {IndexName}", indexName);
             return Problem(
                 detail: ex.Message,
                 statusCode: StatusCodes.Status502BadGateway,
-                title: "Index mapping unavailable");
+                title: "Index information unavailable");
         }
     }
 
