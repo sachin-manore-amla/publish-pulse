@@ -5,7 +5,14 @@
 
 /.vs/ZnodePublishUtility
 /publish_health/publish_health/obj
-/ZnodePublishUtility
 /ZnodePublishUtility.API/obj
 /ZnodePublishUtility.API.Tests
 /ZnodePublishUtility.API/bin/Debug/net8.0
+/ZnodePublishUtility/ZnodePublishUtility.Data/obj
+/ZnodePublishUtility/ZnodePublishUtility.Data/bin/Debug/net8.0
+/ZnodePublishUtility/ZnodePublishUtility.Models/bin/Debug/net8.0
+/ZnodePublishUtility/ZnodePublishUtility.Models/obj
+/ZnodePublishUtility/ZnodePublishUtility.Service/bin/Debug/net8.0
+/ZnodePublishUtility/ZnodePublishUtility.Service/obj
+/ZnodePublishUtility/ZnodePublishUtility.Utilities/bin/Debug/net8.0
+/ZnodePublishUtility/ZnodePublishUtility.Utilities/obj
